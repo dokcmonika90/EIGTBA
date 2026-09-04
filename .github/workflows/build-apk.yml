@@ -14,44 +14,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Verify app HTML
-        shell: bash
+      - name: Verify app files
         run: |
           test -s app/src/main/assets/index.html
           test -s app/src/main/assets/dashboard-mood.js
-          echo "App HTML present: $(wc -c < app/src/main/assets/index.html) bytes"
-
-      - name: Inject dashboard mood feature
-        shell: bash
+          test -s app/src/main/assets/groups-upgrade.js
+      - name: Inject feature scripts
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p = Path('app/src/main/assets/index.html')
-          s = p.read_text(encoding='utf-8')
-          tag = '<script src="dashboard-mood.js"></script>'
-          if tag not in s:
-              s = s.replace('</body>', tag + '</body>')
-              p.write_text(s, encoding='utf-8')
+          p=Path('app/src/main/assets/index.html')
+          s=p.read_text(encoding='utf-8')
+          for name in ('dashboard-mood.js','groups-upgrade.js'):
+              tag=f'<script src="{name}"></script>'
+              if tag not in s: s=s.replace('</body>',tag+'</body>')
+          p.write_text(s,encoding='utf-8')
           PY
-
       - name: Set up Java
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
-
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '8.10'
-
       - name: Build debug APK
         run: gradle assembleDebug --no-daemon
-
       - name: Prepare APK
         run: cp app/build/outputs/apk/debug/app-debug.apk Everything-Is-Going-To-Be-Alright.apk
-
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
@@ -59,15 +50,11 @@ jobs:
           path: Everything-Is-Going-To-Be-Alright.apk
           if-no-files-found: error
           retention-days: 90
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: apk-${{ github.run_number }}
           name: Everything Is Going To Be Alright APK ${{ github.run_number }}
-          body: |
-            Android APK build ${{ github.run_number }}.
-
-            Download **Everything-Is-Going-To-Be-Alright.apk** below and install it on Android.
+          body: Android APK build ${{ github.run_number }}.
           files: Everything-Is-Going-To-Be-Alright.apk
           generate_release_notes: false
