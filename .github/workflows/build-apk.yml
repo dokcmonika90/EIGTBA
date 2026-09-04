@@ -21,13 +21,14 @@ jobs:
           test -s app/src/main/assets/groups-upgrade.js
           test -s app/src/main/assets/relationships-upgrade.js
           test -s app/src/main/assets/relationships-manager.js
+          test -s app/src/main/assets/timeline-upgrade.js
       - name: Inject feature scripts
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('app/src/main/assets/index.html')
           s=p.read_text(encoding='utf-8')
-          for name in ('dashboard-mood.js','groups-upgrade.js','relationships-upgrade.js','relationships-manager.js'):
+          for name in ('dashboard-mood.js','groups-upgrade.js','relationships-upgrade.js','relationships-manager.js','timeline-upgrade.js'):
               tag=f'<script src="{name}"></script>'
               if tag not in s: s=s.replace('</body>',tag+'</body>')
           p.write_text(s,encoding='utf-8')
